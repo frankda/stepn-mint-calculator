@@ -25,8 +25,15 @@ const levelUpGst  = (lv: number) => {
 
 const calcExtraMintCost = (mint: number, factor: number) => mint > 1 ? (mint - 1) * factor : 0
 
+const SOLANA_API = 'https://3rdparty-apis.coinmarketcap.com/v1/cryptocurrency/widget?id=5426,16352,18069'
+
 const Home: NextPage = () => {
   const fetcher = (url: string) => fetch(url).then((res) => res.json())
+  const parseDate = Date.parse(new Date().toISOString().slice(0, 10))
+  const BSC_API = `https://http-api.livecoinwatch.com/coins/history/range?coin=_____GST&start=${parseDate}&end=${parseDate}&currency=USD`
+
+  const [chain, setChain] = useState('solana')
+  const [gstApi, setGstApi] = useState(SOLANA_API)
 
   const [gstPrice, setGstPrice] = useState<number>(0)
   const [gmtPrice, setGmtPrice] = useState<number>(0)
@@ -50,13 +57,17 @@ const Home: NextPage = () => {
   const [shoe1Level, setShoe1Level] = useState(5)
   const [shoe2Level, setShoe2Level] = useState(5)
 
-  const { data, error } = useSWR('https://3rdparty-apis.coinmarketcap.com/v1/cryptocurrency/widget?id=5426,16352,18069', fetcher)
+  const { data, error } = useSWR(gstApi, fetcher)
   
   useEffect(() => {
-    setGstPrice(data?.data[16352]?.quote?.USD.price)
-    setGmtPrice(data?.data[18069]?.quote?.USD.price)
-    setSolPrice(data?.data[5426]?.quote?.USD.price)
-  }, [data])
+    if (chain === 'solana') {
+      setGstPrice(data?.data[16352]?.quote?.USD.price)
+      setGmtPrice(data?.data[18069]?.quote?.USD.price)
+      setSolPrice(data?.data[5426]?.quote?.USD.price)
+    } else if (chain === 'bsc') {
+      setGstPrice(data?.data[0]?.rate)
+    }
+  }, [data, chain])
 
   // check gst and gmt cost according to minting rule
   // update regularly
@@ -120,6 +131,16 @@ const Home: NextPage = () => {
     return (calculateRequiredGst() * gstPrice  + calculateRequiredGmt() * gmtPrice)
   }
 
+  const swapChain = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const target = e.target.value
+    setChain(target)
+    if (target === 'solana') {
+      setGstApi(SOLANA_API)
+    } else if (target === 'bsc') {
+      setGstApi(BSC_API)
+    }
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -138,6 +159,14 @@ const Home: NextPage = () => {
         </LivePriceContainer>
 
         <CalculatorContainer>
+          <strong>Chain: </strong>
+          <Selector name="chain" id="chain" value={chain} onChange={swapChain}>
+            <option value="solana">Solana</option>
+            <option value="bsc">BSC</option>
+          </Selector>
+
+          <br />
+          
           <strong>ENTER SHOE DETAILS:</strong>
           <UnitContainer>
             <Unit>Mint</Unit>
