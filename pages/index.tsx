@@ -153,8 +153,8 @@ const Home: NextPage = () => {
         </h1>
 
         <LivePriceContainer>
-          <LivePrice>GST:${gstPrice && gstPrice.toFixed(2)} |</LivePrice>
-          <LivePrice>GMT:${gmtPrice && gmtPrice.toFixed(2)} |</LivePrice>
+          <LivePrice>GST:${gstPrice && gstPrice.toFixed(2)}|</LivePrice>
+          <LivePrice>GMT:${gmtPrice && gmtPrice.toFixed(2)}|</LivePrice>
           <LivePrice>SOL:${solPrice && solPrice.toFixed(2)}</LivePrice>
         </LivePriceContainer>
 
