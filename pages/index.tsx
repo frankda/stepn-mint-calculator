@@ -3,7 +3,7 @@ import useSWR from 'swr'
 import React, { useCallback, useEffect, useState } from 'react'
 import Head from 'next/head'
 import Image from 'next/image'
-import { CalculatorContainer, LivePrice, LivePriceContainer, Selector, Unit, UnitContainer } from './index.styles'
+import { CalculatorContainer, LivePrice, LivePriceContainer, Selector, Unit, UnitContainer } from '../styles/index.styles'
 import styles from '../styles/Home.module.css'
 
 const levelUpGst  = (lv: number) => {
