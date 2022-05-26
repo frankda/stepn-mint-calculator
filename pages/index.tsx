@@ -25,17 +25,16 @@ const levelUpGst  = (lv: number) => {
 
 const calcExtraMintCost = (mint: number, factor: number) => mint > 1 ? (mint - 1) * factor : 0
 
-const SOLANA_API = 'https://3rdparty-apis.coinmarketcap.com/v1/cryptocurrency/widget?id=5426,16352,18069'
-
 const Home: NextPage = () => {
   const fetcher = (url: string) => fetch(url).then((res) => res.json())
   const parseDate = Date.parse(new Date().toISOString().slice(0, 10))
-  const BSC_API = `https://http-api.livecoinwatch.com/coins/history/range?coin=_____GST&start=${parseDate}&end=${parseDate}&currency=USD`
 
   const [chain, setChain] = useState('solana')
-  const [gstApi, setGstApi] = useState(SOLANA_API)
 
+  const [bnbPrice, setBnbPrice] = useState<number>(0)
   const [gstPrice, setGstPrice] = useState<number>(0)
+  const [gstBscPrice, setGstBscPrice] = useState<number>(0)
+  const [gstSolPrice, setGstSolPrice] = useState<number>(0)
   const [gmtPrice, setGmtPrice] = useState<number>(0)
   const [solPrice, setSolPrice] = useState<number>(0)
 
@@ -44,9 +43,6 @@ const Home: NextPage = () => {
   
   const [extraGstMintFactorCommon, setExtraGstMintFactorCommon] = useState<number>(0)
   const [extraGmtMintFactorCommon, setExtraGmtMintFactorCommon] = useState<number>(0)
-
-  const [requiredGstCost, setRequiredGstCost] = useState<number>(0)
-  const [requiredGmtCost, setRequiredGmtCost] = useState<number>(0)
 
   const [shoe1Type, setShoe1Type] = useState('common')
   const [shoe2Type, setShoe2Type] = useState('uncommon')
@@ -57,17 +53,23 @@ const Home: NextPage = () => {
   const [shoe1Level, setShoe1Level] = useState(5)
   const [shoe2Level, setShoe2Level] = useState(5)
 
-  const { data, error } = useSWR(gstApi, fetcher)
+  const { data, error } = useSWR('https://3rdparty-apis.coinmarketcap.com/v1/cryptocurrency/widget?id=1839,5426,16352,18069,20236', fetcher)
   
   useEffect(() => {
+    setBnbPrice(data?.data[1839]?.quote?.USD.price)
+    setGstSolPrice(data?.data[16352]?.quote?.USD.price)
+    setGstBscPrice(data?.data[20236]?.quote?.USD.price)
+    setGmtPrice(data?.data[18069]?.quote?.USD.price)
+    setSolPrice(data?.data[5426]?.quote?.USD.price)
+  }, [data])
+
+  useEffect(() => {
     if (chain === 'solana') {
-      setGstPrice(data?.data[16352]?.quote?.USD.price)
-      setGmtPrice(data?.data[18069]?.quote?.USD.price)
-      setSolPrice(data?.data[5426]?.quote?.USD.price)
+      setGstPrice(gstSolPrice)
     } else if (chain === 'bsc') {
-      setGstPrice(data?.data[0]?.rate)
+      setGstPrice(gstBscPrice)
     }
-  }, [data, chain])
+  }, [chain, gstSolPrice, gstBscPrice])
 
   // check gst and gmt cost according to minting rule
   // update regularly
@@ -131,15 +133,26 @@ const Home: NextPage = () => {
     return (calculateRequiredGst() * gstPrice  + calculateRequiredGmt() * gmtPrice)
   }
 
-  const swapChain = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const target = e.target.value
-    setChain(target)
-    if (target === 'solana') {
-      setGstApi(SOLANA_API)
-    } else if (target === 'bsc') {
-      setGstApi(BSC_API)
+  const renderChainTokenPrice = () => {
+    if (chain === 'solana') {
+      return <>SOL:${solPrice && solPrice.toFixed(2)}</>
+      }
+      
+    if (chain === 'bsc') {
+      return <>BSC:${bnbPrice && bnbPrice.toFixed(2)}</>
     }
   }
+
+  const renderChainTokenTotalPrice = () => {
+    if (chain === 'solana') {
+      return <>SOL: {(calculateTotalCost() / solPrice).toFixed(2)}</>
+      }
+      
+    if (chain === 'bsc') {
+      return <>BNB: {(calculateTotalCost() / bnbPrice).toFixed(2)}</>
+    }
+  }
+
 
   return (
     <div className={styles.container}>
@@ -155,12 +168,12 @@ const Home: NextPage = () => {
         <LivePriceContainer>
           <LivePrice>GST:${gstPrice && gstPrice.toFixed(2)}|</LivePrice>
           <LivePrice>GMT:${gmtPrice && gmtPrice.toFixed(2)}|</LivePrice>
-          <LivePrice>SOL:${solPrice && solPrice.toFixed(2)}</LivePrice>
+          <LivePrice>{renderChainTokenPrice()}</LivePrice>
         </LivePriceContainer>
 
         <CalculatorContainer>
           <strong>Chain: </strong>
-          <Selector name="chain" id="chain" value={chain} onChange={swapChain}>
+          <Selector name="chain" id="chain" value={chain} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setChain(e.target.value)}>
             <option value="solana">Solana</option>
             <option value="bsc">BSC</option>
           </Selector>
@@ -237,7 +250,7 @@ const Home: NextPage = () => {
           <div className='result'>
             <span>${calculateTotalCost().toFixed(2)}</span>
             <br />
-            <span>SOL: {(calculateTotalCost() / solPrice).toFixed(2)}</span>
+            <span>{renderChainTokenTotalPrice()}</span>
           </div>
         </CalculatorContainer>
       </main>
