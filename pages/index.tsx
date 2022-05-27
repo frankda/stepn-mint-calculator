@@ -139,7 +139,7 @@ const Home: NextPage = () => {
       }
       
     if (chain === 'bsc') {
-      return <>BSC:${bnbPrice && bnbPrice.toFixed(2)}</>
+      return <>BNB:${bnbPrice && bnbPrice.toFixed(2)}</>
     }
   }
 
